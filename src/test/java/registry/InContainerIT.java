@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package sample;
+package registry;
 
 import org.junit.Test;
 import org.wisdom.api.http.Result;
@@ -41,7 +41,7 @@ public class InContainerIT extends WisdomTest {
      * templates.
      */
     @Inject
-    WelcomeController controller;
+    ExtensionRegistryController controller;
 
     @Test
     public void testWelcomePage() {

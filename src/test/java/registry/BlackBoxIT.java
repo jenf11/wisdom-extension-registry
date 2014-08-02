@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package sample;
+package registry;
 
 import org.jsoup.nodes.Document;
 import org.junit.Test;

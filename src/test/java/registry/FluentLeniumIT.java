@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package sample;
+package registry;
 
 import org.junit.Test;
 import org.wisdom.test.parents.WisdomFluentLeniumTest;

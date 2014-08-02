@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package sample;
+package registry;
 
 import org.junit.Test;
 import org.wisdom.api.http.Result;
@@ -42,7 +42,7 @@ public class UnitTest {
      */
     @Test
     public void testWelcome() throws Exception {
-        WelcomeController controller = new WelcomeController();
+        ExtensionRegistryController controller = new ExtensionRegistryController();
         // Use a mock to simulate the template.
         // You can do this for every service and template your controller is using.
         controller.welcome = mock(Template.class);
