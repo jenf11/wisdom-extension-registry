@@ -18,13 +18,24 @@
   #L%
   -->
 <!DOCTYPE html>
-<html layout:decorator="layout">
+<html>
+
+
 <head lang="en">
 
-    <title>OSGi Bundles</title>
+    <title>Wisdom Extension Registry</title>
+    <link rel="shortcut icon" href="/assets/owl-small.png"/>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
+    <link rel="shortcut icon" href="/assets/images/owl-small.png"/>
+    <script src="/libs/jquery.min.js"></script>
+    <script src="/libs/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/libs/css/bootstrap.css" media="screen"/>
+    <link rel="stylesheet" href="/libs/bootswatch-yeti/css/bootstrap.css" media="screen"/>
     <link rel="stylesheet" href="/assets/table.css"/>
     <link href="/assets/dashboard.css" rel="stylesheet"/>
+
     <style>
         #filter {
             border-radius: 5px;
@@ -32,29 +43,24 @@
     </style>
 </head>
 <body>
-<div layout:fragment="content">
+<div class="container">
     <!-- the actual content goes there -->
 
     <h1 class="page-header">Wisdom Extension Registry</h1>
-
-
     <div class="container">
         <div class="row">
             <div class="col-md-10">
-                <h2 class="sub-header">Wisdom Extensions</h2>
-                <input class="input-sm" id="filter" placeholder="Search" />
+                <input class="input-sm" id="filter" placeholder="Search"/>
                 <button class="btn btn-info btn-xs pull-right" id="refresh"><span
                         class="glyphicon glyphicon-refresh"></span></button>
                 <table class="table table-striped table-condensed" id="table">
                     <thead>
                     <tr>
-                        <th class="col-md-1">#</th>
-                        <th class="col-md-6">Bundle Symbolic Name &amp; Version</th>
-                        <th class="col-md-1">State</th>
-                        <th class="col-md-1"></th>
+            <th class="col-md-6">Extension Name</th>
+                        <th class="col-md-1">Version</th>
                     </tr>
                     </thead>
-                    <tbody id="bundle-table-body">
+                    <tbody id="ext-table-body">
                     </tbody>
                 </table>
             </div>
@@ -78,8 +84,7 @@
 
                         sortList: [
                             [0, 0],
-                            [1, 0],
-                            [2, 0]
+                            [1, 0]
                         ],
 
                         // header layout template; {icon} needed for some themes
@@ -90,90 +95,68 @@
                         widgetOptions: {
                             // change the default column class names
                             // primary is the first column sorted, secondary is the second, etc
-                            columns: [ "primary", "secondary", "tertiary" ]
+                            columns: [ "primary", "secondary" ]
                         }
                     });
             //Tooltip
             $("a").tooltip();
-            $("#refresh").click(load2);
+            $("#refresh").click(load);
 
-            load2();
+            load();
+
+            $("#table").filterTable({
+                filterSelector: "#filter"
+            });
 
         });
 
         function toggle(ext) {
-            $.get("http://" + window.location.host + "/list/" + ext.id).complete(load);
+            $.get("http://" + window.location.host + "/list/" + ext.name).complete(load);
         }
 
 
-
-
-
-        function writeBundleData(data) {
+        function writeExtensionData(data) {
             $("#ext-table-body").empty();
-            $("#bundle-count").html(data.bundles.length);
-            $("#bundle-active-count").html(data.active);
-            $("#bundle-installed-count").html(data.installed);
-            $("#bundle-events").html(data.events);
-
-            $.each(data.bundles, function (index, bundle) {
+            $.each(data, function (index, ext) {
                 var tr = $("<tr></tr>");
-                var id = $("<td>" + bundle.id + "</td>");
                 var info = $("<td></td>");
+
                 info.append($("<a></a>")
-                        .attr("href", "#collapse" + bundle.id)
+                        .attr("href", "#collapse" + ext.name)
                         .attr("data-toggle", "collapse")
-                        .html(bundle.name));
+                        .html(ext.name));
+
                 var list = $("<ul></ul>").toggleClass("properties");
-                $.each(bundle.headers, function (key, value) {
+
+                $.each(ext, function (key, value) {
+                    if (key == "homepageURL" || key == "repoURL") {
+                        // alert(value);
+                    }
                     $(list).append($("<li>" + key + "&nbsp;=&nbsp;" + value + "</li>"));
                 });
 
                 info.append($("<div></div>")
-                        .attr("id", "collapse" + bundle.id)
+                        .attr("id", "collapse" + ext.name)
                         .addClass("collapse", "meta")
                         .html(list));
 
-                var state = $("<td></td>");
-                if (bundle.state == "INSTALLED") {
-                    state.html("<span class=\"text-danger\">" + bundle.state + "</span>")
-                } else {
-                    state.html("<span class=\"text-success\">" + bundle.state + "</span>")
-                }
+                var version = $("<td></td>").html(ext.version);
 
-                $(tr).append(id).append(info).append(state).append(getActionBarForBundle(bundle));
+                $(tr).append(info).append(version);
                 $("#ext-table-body").append(tr);
             });
             $("#table").trigger("update").filterTable({
                 filterSelector: "#filter"
             });
+
             $("#filter").val("");
         }
+
+
         function load() {
-            $.get("http://" + window.location.host + "/list").success(writeBundleData)
+            $.get("http://" + window.location.host + "/list").success(writeExtensionData)
         }
 
-        function load2(){
-
-           var url = "http://"+ window.location.host+"/list" ;
-             alert(url);
-            $.getJSON(url, function( data ) {
-
-            var s = $( ".result" ).html( data );
-
-                alert(s);
-
-
-
-                    $.each(data, function (key, value) {
-                        console.log(key,value);
-                    });
-
-
-
-            alert(data);
-        });
-        }
 
         /*]]>*/
     </script>

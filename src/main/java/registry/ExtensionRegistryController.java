@@ -19,15 +19,18 @@
  */
 package registry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.io.IOUtils;
+import org.apache.felix.ipojo.annotations.Requires;
 import org.wisdom.api.DefaultController;
-import org.wisdom.api.annotations.Controller;
-import org.wisdom.api.annotations.Route;
-import org.wisdom.api.annotations.View;
+import org.wisdom.api.annotations.*;
 import org.wisdom.api.content.Json;
 import org.wisdom.api.http.HttpMethod;
 import org.wisdom.api.http.Result;
 import org.wisdom.api.templates.Template;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,43 +39,44 @@ import java.util.Map;
  */
 @Controller
 public class ExtensionRegistryController extends DefaultController {
-     private Map <String,ExtensionObj> list;
+     private Map <String, Extension> list;
     /**
      * Injects a template named 'welcome'.
      */
     @View("welcome")
     Template welcome;
 
-    @View("managerview")
+    @View("managerView")
     Template manage;
-    @View("usersview")
+    @View("userView")
     Template user;
-    @View("developerview")
+    @View("developerView")
     Template dev;
 
 
+    @Requires
+    Json json;
+
+    public ExtensionRegistryController() {
+        createFakeList();
+    }
 
     public void createFakeList(){
         //how can I make count a function? so if i use the variable count it recalates each time
         // the number?
-        this.list = new HashMap<String, ExtensionObj>();
+        this.list = new HashMap<String, Extension>();
         String count = String.valueOf(list.size()+1);
-        list.put(String.valueOf(list.size()+1),new ExtensionObj("Bob","I do stuff","url//","1.0","stuff//",
-                new String[]{"Awesome"}));
-        list.put(String.valueOf(list.size()+1),new ExtensionObj("Rob","I do stuff","url//","1.0","stuff//",
-                new String[]{"Awesome"}));
-        list.put(String.valueOf(list.size()+2),new ExtensionObj("Changer","I do more stuff",
-                "url//","3.0","stuff//",
-                new String[]{"Awesome"}));
 
+            list.put("tracer",new Extension());
+        list.put("javaBob",new Extension());
+        list.put("cssstuff",new Extension());
+        list.put("Imaketheworld",new Extension());
+        list.get("javaBob").setLicense(new License("MIT","https://raw.github.com/jashkenas/underscore/master/LICENSE"));
+        list.get("javaBob").setKeyWords(new String[]{"stuff","things","java"});
+        list.get("javaBob").setRepository(new Repository("git","http://somewhere"));
+        list.get("javaBob").setHomepage("http://somewhere");
     }
 
-    public void addToList(Json extension){
-
-    }
-    public void deleteFromList(Json extension){
-
-    }
 
     /**
      * The action method returning the welcome page. It handles
@@ -86,26 +90,80 @@ public class ExtensionRegistryController extends DefaultController {
     }
 
     @Route(method = HttpMethod.GET, uri = "/user")
-
     public Result user() {
         return ok(render(user));
     }
+
     @Route(method = HttpMethod.GET, uri = "/dev")
     public Result dev() {
         return ok(render(dev));
     }
-    @Route(method = HttpMethod.GET, uri = "/admin")
+
+    @Route(method = HttpMethod.GET, uri = "/manage")
     public Result manage() {
-        createFakeList();
-        String n = this.list.get("1").exName;
-        return ok(render(manage, "blob",list));
+        return ok(render(manage));
     }
 
     @Route(method = HttpMethod.GET, uri = "/list")
     public Result get() {
-        createFakeList();
         return  ok(list).json();
     }
 
+
+    @Route(method = HttpMethod.DELETE, uri = "/list/{id}")
+    public Result delete(@Parameter("id") String id) {
+        System.out.println("deleting "+id);
+        removeExtensionById(id);
+        return ok();
+    }
+
+    @Route(method = HttpMethod.POST, uri = "/upload")
+    public Result findExt(@FormParameter("url") String u) throws IOException {
+        System.out.println("we made it here - " + u);
+       URL url = new URL(u);
+       String j = IOUtils.toString(url);
+       JsonNode node = json.parse(j);
+        addToList(node);
+        return ok(node);
+
+     }
+
+    private void addToList(JsonNode node){
+        //Todo needs error checking, and hoz to parse objects and array? what to return?
+        System.out.println("add to list");
+        String name = node.get("name").asText();
+        System.out.println(name);
+       if(!name.isEmpty() && !name.equals(null) && !list.containsKey(name)){
+          list.put(name,new Extension());
+           list.get(name).setName(name);
+         String text =node.get("version").asText();
+            list.get(name).setVersion(text);
+            text =node.get("description").asText();
+            list.get(name).setDescription(text);
+//            text =node.get("repository").asText();
+            list.get(name).setRepository(new Repository("git","http://somewhere"));
+
+            text =node.get("author").asText();
+            list.get(name).setAuthor(text);
+//            text =node.get("license").asText();
+            list.get(name).setLicense(new License("MIT",
+                    "https://raw.github.com/jashkenas/underscore/master/LICENSE"));
+            text =node.get("homepage").asText();
+            list.get(name).setHomepage("http://somewhere");
+//            text =node.get("keywords").asText();
+            list.get(name).setKeyWords(new String[]{"stuff","things","java"});
+
+
+        }
+        else{
+            System.out.println("bad things have happened");
+        }
+
+
+    }
+    private void removeExtensionById(String id) {
+        list.remove(id);
+        System.out.println(list.keySet());
+    }
 
 }
