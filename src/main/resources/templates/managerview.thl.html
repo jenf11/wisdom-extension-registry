@@ -99,11 +99,14 @@
 </div>
 <!-- input box to add an extension -->
 <div class="container">
+    <h3>Add an Extension</h3>
     <div class="row">
-        <div class="col-md-10">
-            <h3>Add an Extension</h3>
+        <div class="col-md-4">
             <input class="input-sm" id="url" placeholder="Enter URL"/>
             <button type="submit" class="btn btn-info btn-xs" id="add">Submit</button>
+        </div>
+        <div class="col-md-8">
+            <span  class="alert" id="error-msg"></span>
         </div>
     </div>
 </div>
@@ -142,10 +145,15 @@
                 });
         //Tooltip
         $("a").tooltip();
-        $("#refresh").click(load);
+        $("#refresh").click(function (){
+            load();
+            $("#error-msg").html("");
+        });
         //add a new extension
         $("#add").click(function () {
             create($('#url').val());
+            $("#error-msg").html("");
+
         });
 
         load();
@@ -167,9 +175,14 @@
             data: { url: ext }
         }).done(function (data) {
             console.log(data);
-            // is is an error
-            // manage error
-
+           // $.each(data, function (key, value) {
+               if(data.error){
+                   $("#error-msg").html(data.error +" "+ data.reason).addClass("alert-danger").removeClass("alert-success");
+               }
+            else{
+                   $("#error-msg").html("The "+ data.name+ " extension has been added.").removeClass("alert-danger").addClass("alert-success");
+               }
+          //  });
             load();
             // alert('loaded?')
         });
