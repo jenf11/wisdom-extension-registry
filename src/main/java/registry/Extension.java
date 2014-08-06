@@ -1,16 +1,26 @@
 package registry;
 
 
+import javax.validation.constraints.NotNull;
+
 public class Extension {
+    @NotNull
     private String name;
+    @NotNull
     private String version;
+    @NotNull
     private String description;
+
     private Repository repository;
     private String author;
     private License license;
+
+    @NotNull
     protected String homepage;
+
     protected String[] keyWords;
     private String owner;
+
     private String date;
 
     public Extension() {

@@ -29,10 +29,12 @@ import org.wisdom.api.http.HttpMethod;
 import org.wisdom.api.http.Result;
 import org.wisdom.api.templates.Template;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Your first Wisdom Controller.
@@ -62,8 +64,6 @@ public class ExtensionRegistryController extends DefaultController {
     }
 
     public void createFakeList(){
-        //how can I make count a function? so if i use the variable count it recalates each time
-        // the number?
         this.list = new HashMap<String, Extension>();
         String count = String.valueOf(list.size()+1);
 
@@ -75,6 +75,13 @@ public class ExtensionRegistryController extends DefaultController {
         list.get("javaBob").setKeyWords(new String[]{"stuff","things","java"});
         list.get("javaBob").setRepository(new Repository("git","http://somewhere"));
         list.get("javaBob").setHomepage("http://somewhere");
+        String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
+        list.get("javaBob").setDate(date);
+        list.get("Imaketheworld").setDate(date);
+        list.get("cssstuff").setDate(date);
+        list.get("tracer").setDate(date);
+
+
     }
 
 
@@ -128,38 +135,22 @@ public class ExtensionRegistryController extends DefaultController {
 
      }
 
+    @Requires
+    Validator validator;
+
     private void addToList(JsonNode node){
-        //Todo needs error checking, and hoz to parse objects and array? what to return?
+        //Todo needs error checking, and how to parse objects and array? what to return?
         System.out.println("add to list");
-        String name = node.get("name").asText();
-        System.out.println(name);
-       if(!name.isEmpty() && !name.equals(null) && !list.containsKey(name)){
-          list.put(name,new Extension());
-           list.get(name).setName(name);
-         String text =node.get("version").asText();
-            list.get(name).setVersion(text);
-            text =node.get("description").asText();
-            list.get(name).setDescription(text);
-//            text =node.get("repository").asText();
-            list.get(name).setRepository(new Repository("git","http://somewhere"));
-
-            text =node.get("author").asText();
-            list.get(name).setAuthor(text);
-//            text =node.get("license").asText();
-            list.get(name).setLicense(new License("MIT",
-                    "https://raw.github.com/jashkenas/underscore/master/LICENSE"));
-            text =node.get("homepage").asText();
-            list.get(name).setHomepage("http://somewhere");
-//            text =node.get("keywords").asText();
-            list.get(name).setKeyWords(new String[]{"stuff","things","java"});
-
-
-        }
-        else{
-            System.out.println("bad things have happened");
+        Extension extension = json.mapper().convertValue(node, Extension.class);
+        Set<ConstraintViolation<Extension>> errors = validator.validate(extension);
+        if (! errors.isEmpty()) {
+            logger().error("Something really bad happened...");
+            logger().error(errors.toString());
+            return;
         }
 
-
+        extension.setDate(new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
+        list.put(extension.getName(), extension);
     }
     private void removeExtensionById(String id) {
         list.remove(id);
