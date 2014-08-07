@@ -21,8 +21,7 @@
 <html>
 <head lang="en">
 
-    <title>Extension Manager</title>
-
+    <title>Wisdom Extensions</title>
     <link rel="shortcut icon" href="/assets/images/owl-small.png"/>
     <script src="/libs/jquery.min.js"></script>
     <script src="/libs/js/bootstrap.min.js"></script>
@@ -30,30 +29,67 @@
     <link rel="stylesheet" href="/libs/bootswatch-yeti/css/bootstrap.css" media="screen"/>
     <link rel="stylesheet" href="/assets/table.css"/>
     <link href="/assets/dashboard.css" rel="stylesheet"/>
+
     <style>
-        #filter {
+        /* generic table styling */
+        table {
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 5px;
+        }
+
+        th {
+            border-bottom: 2px solid #999;
+            background-color: #eee;
+            vertical-align: bottom;
+        }
+
+        td {
+            border-bottom: 1px solid #ccc;
+        }
+
+        /* filter-table specific styling */
+        td.alt {
+            background-color: #ffc;
+            background-color: rgba(255, 255, 0, 0.2);
+        }
+        #filter, #url{
             border-radius: 5px;
         }
+
+        /* special filter field styling for this example */
+
     </style>
 </head>
 <body>
-<div>
+<div class="container">
     <!-- the actual content goes there -->
 
     <h1 class="page-header">Wisdom Extension Registry</h1>
+    <!-- extension counter -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-offset-1 col-sm-2 placeholder">
+                <h4 id="ext-count" class="text-center">0</h4>
+
+                <p class="text-muted text-center">Wisdom Extensions</p>
+            </div>
+        </div>
+    </div>
+    <!-- search bar and extension list -->
     <div class="container">
         <div class="row">
             <div class="col-md-10">
-
-                <input class="input-sm" id="filter" placeholder="Search" />
+                <input class="input-sm" id="filter" placeholder="Search"/>
                 <button class="btn btn-info btn-xs pull-right" id="refresh"><span
                         class="glyphicon glyphicon-refresh"></span></button>
                 <table class="table table-striped table-condensed" id="table">
                     <thead>
                     <tr>
-                         <th class="col-md-6">Extension Name</th>
-                        <th class="col-md-1">Version</th>
-
+                        <th class="col-md-6">Extension Name</th>
+                        <th class="col-md-3">Version</th>
                     </tr>
                     </thead>
                     <tbody id="ext-table-body">
@@ -62,14 +98,18 @@
             </div>
         </div>
     </div>
-
+    <!-- input box to add an extension -->
     <div class="container">
+        <h3>Add an Extension</h3>
+
         <div class="row">
-            <div class="col-md-10">
-                    <h3>Add an Extension</h3>
-                    <input class="input-sm" id="url" placeholder="Enter URL" />
-                    <button type="submit" class="btn btn-info btn-xs" id="add">Submit</button>
-              </div>
+            <div class="col-md-4">
+                <input class="input-sm" id="url" placeholder="Enter URL"/>
+                <button type="submit" class="btn btn-info btn-xs" id="add">Submit</button>
+            </div>
+            <div class="col-md-8">
+                <span class="alert" id="error-msg"></span>
+            </div>
         </div>
     </div>
 
@@ -77,131 +117,12 @@
     <script src="/libs/js/jquery.tablesorter.min.js"></script>
     <script src="/libs/js/jquery.tablesorter.widgets.min.js"></script>
     <script src="/assets/libs/jquery.filtertable.min.js"></script>
-
-
-    <script>
-        /*<![CDATA[*/
-        $(document).ready(function () {
-            // Table Sorter.
-            $("#table").tablesorter(
-                    {
-                        // We have overridden this style.
-                        theme: 'dropbox',
-
-                        sortList: [
-                            [0, 0],
-                            [1, 0]
-                        ],
-
-                        // header layout template; {icon} needed for some themes
-                        headerTemplate: '{content}&nbsp;{icon}',
-
-                        // initialize column styling of the table
-                        widgets: ["columns"],
-                        widgetOptions: {
-                            // change the default column class names
-                            // primary is the first column sorted, secondary is the second, etc
-                            columns: [ "primary", "secondary" ]
-                        }
-                    });
-            //Tooltip
-            $("a").tooltip();
-            $("#refresh").click(load);
-
-            load();
-
-            $("#add").click(function () {
-                alert($('#url').val());
-                create($('#url').val());
-            });
-
-
-        });
-
-        function create(ext) {
-            alert("Creating  " + ext);
-
-            var url=  "http://" + window.location.host + "/upload";
-           // var url = /*[[${#routes.route('upload')}]]*/ null;
-            $.ajax({
-                type: "POST",
-                url: url,
-                data: { url: ext }
-            }).done(function(data) {
-                    console.log(data);
-            });
-        }
-
-        function remove(ext) {
-            $.ajax({
-                url: "http://" + window.location.host + "/list/" + ext,
-                type: 'DELETE',
-                complete: function (result) {
-                    load();
-                }
-
-            });
-        }
-
-        function getActionBarForBundle(index) {
-
-            var bar = $("<div></div>").addClass("bundle-action-bar pull-right").addClass("btn-toolbar").attr("role",
-                    "toolbar");
-            var inner = $("<div></div>").addClass("btn-group");
-            var uninstall = $("<button type=\"button\" class=\"btn btn-default btn-xs\"><span class=\"glyphicon glyphicon-remove\"></span></button>");
-            uninstall.click(function () {
-                remove(index)
-            });
-            inner.append(uninstall);
-            bar.append(inner);
-            return $("<td></td>").append(bar);
-
-        }
-
-
-        function writeExtensionData(data) {
-            $("#ext-table-body").empty();
-            $.each(data, function (index, ext) {
-                var tr = $("<tr></tr>");
-                var id = $("<td>" + index + "</td>");
-                var info = $("<td></td>");
-
-                info.append($("<a></a>")
-                        .attr("href", "#collapse" + ext.name)
-                        .attr("data-toggle", "collapse")
-                        .html(ext.name));
-
-                var list = $("<ul></ul>").toggleClass("properties");
-
-                $.each(ext, function (key, value) {
-                    if(key == "homepageURL" || key == "repoURL") {
-
-                    }
-                    $(list).append($("<li>" + key + "&nbsp;=&nbsp;" + value + "</li>"));
-                });
-
-                info.append($("<div></div>")
-                        .attr("id", "collapse" + ext.name)
-                        .addClass("collapse", "meta")
-                        .html(list));
-
-                var state = $("<td></td>").html(ext.version);
-
-                $(tr).append(id).append(info).append(state).append(getActionBarForBundle(index));
-                $("#ext-table-body").append(tr);
-            });
-            $("#table").trigger("update").filterTable({
-                filterSelector: "#filter"
-            });
-            $("#filter").val("");
-        }
-        function load() {
-            $.get("http://" + window.location.host + "/list").success(writeExtensionData)
-        }
-
-
-        /*]]>*/
+    <script src="/assets/libs/extensionregistry.js"></script>
+    <script language="javascript">
+        var hasAccessToActionBar = false;
     </script>
+
+
 </div>
 </body>
 </html>

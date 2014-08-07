@@ -50,8 +50,7 @@ public class ExtensionRegistryController extends DefaultController {
     /**
      * Injects a template named 'welcome'.
      */
-    @View("welcome")
-    Template welcome;
+
 
     @View("managerView")
     Template manage;
@@ -96,10 +95,6 @@ public class ExtensionRegistryController extends DefaultController {
      *
      * @return the welcome page
      */
-    @Route(method = HttpMethod.GET, uri = "/")
-    public Result welcome() {
-        return ok(render(welcome, "welcome", "Welcome to Wisdom Framework!"));
-    }
 
     @Route(method = HttpMethod.GET, uri = "/user")
     public Result user() {
