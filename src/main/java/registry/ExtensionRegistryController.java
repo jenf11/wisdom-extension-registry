@@ -18,11 +18,7 @@
  * #L%
  */
 package registry;
-import org.wisdom.api.security.Authenticated;
-import org.wisdom.monitor.service.MonitorExtension;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import javassist.util.proxy.Proxy;
@@ -33,30 +29,27 @@ import org.wisdom.api.annotations.*;
 import org.wisdom.api.content.Json;
 import org.wisdom.api.http.HttpMethod;
 import org.wisdom.api.http.Result;
+import org.wisdom.api.security.Authenticated;
 import org.wisdom.api.templates.Template;
+import org.wisdom.monitor.service.MonitorExtension;
+import org.wisdom.orientdb.object.OrientDbCrud;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
-import org.wisdom.orientdb.object.OrientDbCrud;
 
 /**
- * Your first Wisdom Controller.
+ * A controller to manage the list of extensions available for the Wisdom framework.
+ * The list is saved in memory using the Wisdom-OrientDB extension. Database is configured in the
+ * application.conf file. Some methods have authorisation limited to Monitor authentication.
  */
 
 @Controller
-
-public class ExtensionRegistryController extends DefaultController implements MonitorExtension{
-     //private Map <String, Extension> list;
-    /**
-     * Injects a template named 'welcome'.
-     */
-
+public class ExtensionRegistryController extends DefaultController implements MonitorExtension {
 
     @View("managerView")
     Template manage;
@@ -66,42 +59,18 @@ public class ExtensionRegistryController extends DefaultController implements Mo
     Template dev;
 
     @Model(value = Extension.class)
-    private OrientDbCrud<Extension,String> extensionCrud;
-
+    private OrientDbCrud<Extension, String> extensionCrud;
 
     Class klass = Proxy.class;
-
 
     @Requires
     Json json;
 
-//    public void createFakeList(){
-//        this.list = new HashMap<String, Extension>();
-//        String count = String.valueOf(list.size()+1);
-//
-//            list.put("tracer",new Extension());
-//        list.put("javaBob",new Extension());
-//        list.put("cssstuff",new Extension());
-//        list.put("Imaketheworld",new Extension());
-//        list.get("javaBob").setLicense(new License("MIT","https://raw.github.com/jashkenas/underscore/master/LICENSE"));
-//        list.get("javaBob").setKeywords(new String[]{"stuff","things","java"});
-//        list.get("javaBob").setRepository(new Repository("git","http://somewhere"));
-//        list.get("javaBob").setHomepage("http://somewhere");
-//        String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
-//        list.get("javaBob").setDate(date);
-//        list.get("Imaketheworld").setDate(date);
-//        list.get("cssstuff").setDate(date);
-//        list.get("tracer").setDate(date);
-//
-//
-//    }
-
-
     /**
-     * The action method returning the welcome page. It handles
-     * HTTP GET request on the "/" URL.
+     * The action method returning the user's view of the extension page. It handles
+     * HTTP GET request on the "/user" URL.
      *
-     * @return the welcome page
+     * @return the user extension page.
      */
 
     @Route(method = HttpMethod.GET, uri = "/user")
@@ -109,16 +78,35 @@ public class ExtensionRegistryController extends DefaultController implements Mo
         return ok(render(user));
     }
 
+    /**
+     * The action method returning the developer's view of the extension page. It handles
+     * HTTP GET request on the "/dev" URL.
+     * TODO: Separate authorisation
+     * @return the developer extension page.
+     */
     @Route(method = HttpMethod.GET, uri = "/dev")
     public Result dev() {
         return ok(render(dev));
     }
+
+    /**
+     * The action method returning the administration's view of the extension page. It handles
+     * HTTP GET request on the "/monitor/manage" URL.  It is accessed via the Wisdom Monitor.
+     *
+     * @return the managed extension page.
+     */
     @Authenticated("Monitor-Authenticator")
     @Route(method = HttpMethod.GET, uri = "/monitor/manage")
     public Result manage() {
         return ok(render(manage));
     }
 
+    /**
+     * The action method returning the user's view of the extension page. It handles
+     * HTTP GET request on the "/list" URL.
+     *
+     * @return extension list in a json structure.
+     */
     @Route(method = HttpMethod.GET, uri = "/list")
     public Result get() {
 
@@ -126,9 +114,16 @@ public class ExtensionRegistryController extends DefaultController implements Mo
         for (Extension extension : extensionCrud.findAll()) {
             list.add(extension);
         }
-        return  ok(list).json();
+        return ok(list).json();
     }
 
+    /**
+     * The action method deleting a specific extension from the database. It handles
+     * HTTP DELETE request on the "/list" URL.  Must be authenticated via the Wisdom Monitor
+     * for this method.
+     *
+     * @return result.
+     */
     @Authenticated("Monitor-Authenticator")
     @Route(method = HttpMethod.DELETE, uri = "/list/{id}")
     public Result delete(@Parameter("id") String id) {
@@ -136,12 +131,19 @@ public class ExtensionRegistryController extends DefaultController implements Mo
         return ok();
     }
 
+    /**
+     * The action method that loads a json object via a url and adds it to the database. It handles
+     * HTTP POST request on the "/upload" URL.
+     *
+     * @return json structure containing the new extension
+     */
     @Route(method = HttpMethod.POST, uri = "/upload")
     public Result findExt(final @FormParameter("url") String u) {
 
         return async(new Callable<Result>() {
             @Override
             public Result call() throws Exception {
+
                 try {
                     URL url = new URL(u);
                     String j = IOUtils.toString(url);
@@ -150,9 +152,9 @@ public class ExtensionRegistryController extends DefaultController implements Mo
                     return ok(node);
                 } catch (IOException e) {
                     // Cannot read the URL
-                    logger().error("File not found or is unable to be read " + e );
+                    logger().error("File not found or is unable to be read " + e);
 
-                    return ok(json.newObject().put("error","An error has occurred:").put("reason",
+                    return ok(json.newObject().put("error", "An error has occurred:").put("reason",
                             "File not found or unable to be read."));
                 } catch (Exception e) {
                     logger().error(" A problem has occurred please check that your file is " +
@@ -160,9 +162,9 @@ public class ExtensionRegistryController extends DefaultController implements Mo
                             " - " + e.getMessage() +
                             " (" + e.getClass()
                             .getName() + ")", e);
-                    return ok(json.newObject().put("error","An error has occurred:").put("reason",
+                    return ok(json.newObject().put("error", "An error has occurred:").put("reason",
                             "Please check that your file is " +
-                            "valid JSON. " ));
+                                    "valid JSON. "));
                 }
             }
         });
@@ -170,20 +172,27 @@ public class ExtensionRegistryController extends DefaultController implements Mo
 
     }
 
+    /**
+     * Method that reads a json structure validating that it has all of the required javabean
+     * fields that cannot be null by using Validator. If all goes well the object is added to the
+     * database.
+     *
+     * @return json structure containing either the extension or error message
+     */
     @Requires
     Validator validator;
-
-    private JsonNode addToList(JsonNode node){
-        ObjectNode result =  json.newObject();
+    private JsonNode addToList(JsonNode node) {
+        ObjectNode result = json.newObject();
+        //map our incoming json to the
         Extension extension = json.mapper().convertValue(node, Extension.class);
         Set<ConstraintViolation<Extension>> errors = validator.validate(extension);
-        if (! errors.isEmpty()) {
+        if (!errors.isEmpty()) {
             Iterator<ConstraintViolation<Extension>> i = errors.iterator();
             String msg = "";
-             while(i.hasNext()){
-                 msg = msg  + i.next().getPropertyPath()+ " ";
+            while (i.hasNext()) {
+                msg = msg + i.next().getPropertyPath() + " ";
 
-             }
+            }
             result.put("error", "Error while adding extension").put("reason",
                     msg + "need(s) to be set");
             logger().error("Something really bad happened...");
@@ -195,20 +204,39 @@ public class ExtensionRegistryController extends DefaultController implements Mo
         extensionCrud.save(extension);
         return node;
     }
+
+    /**
+     * Deletes the extension specified by database id from the database.
+     * @param id is the id field in the database for the extension.
+     */
     private void removeExtensionById(String id) {
         extensionCrud.delete(id);
     }
 
+    /**
+     * Method required from implementing MonitorExtension. Displays the label in the Wisdom
+     * Monitor side bar.
+     * @return  the name of the label.
+     */
     @Override
     public String label() {
         return "Extension Manager";
     }
 
+    /**
+     * Method required from implementing MonitorExtension.
+     * @return  url of the method to be accessed via the Monitor.
+     */
     @Override
     public String url() {
         return "/monitor/manage";
     }
 
+    /**
+     * Method required from implementing MonitorExtension. Displays the category in the Wisdom
+     * Monitor side bar.
+     * @return  the name of the category.
+     */
     @Override
     public String category() {
         return "Documentation";

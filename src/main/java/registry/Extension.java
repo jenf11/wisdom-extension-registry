@@ -2,10 +2,16 @@ package registry;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
+
+/**
+ * Javabean that structures our extension data. Fields that are required use the annotation @NotNull
+ * which is used by the Validator inside the ExtensionRegistryController. An id field is used for
+ * storage inside the orientDB database uses the annotation @Id. The @Entity tells orientDB how
+ * to structure this object in its graph.
+ */
 @Entity
 @JsonIgnoreProperties("handler")
 public class Extension {

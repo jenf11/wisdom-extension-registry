@@ -4,10 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 /**
- * registry
- * User: jennifer
- * Date: 04/08/14
- * Time: 15:28
+ * Javabean for our license structure.
  */
 @Entity
 public class License {
