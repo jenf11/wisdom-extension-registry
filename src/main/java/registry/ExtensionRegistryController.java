@@ -18,6 +18,8 @@
  * #L%
  */
 package registry;
+import org.wisdom.api.security.Authenticated;
+import org.wisdom.monitor.service.MonitorExtension;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -46,8 +48,10 @@ import org.wisdom.orientdb.object.OrientDbCrud;
 /**
  * Your first Wisdom Controller.
  */
+
 @Controller
-public class ExtensionRegistryController extends DefaultController {
+
+public class ExtensionRegistryController extends DefaultController implements MonitorExtension{
      //private Map <String, Extension> list;
     /**
      * Injects a template named 'welcome'.
@@ -109,8 +113,8 @@ public class ExtensionRegistryController extends DefaultController {
     public Result dev() {
         return ok(render(dev));
     }
-
-    @Route(method = HttpMethod.GET, uri = "/manage")
+    @Authenticated("Monitor-Authenticator")
+    @Route(method = HttpMethod.GET, uri = "/monitor/manage")
     public Result manage() {
         return ok(render(manage));
     }
@@ -125,7 +129,7 @@ public class ExtensionRegistryController extends DefaultController {
         return  ok(list).json();
     }
 
-
+    @Authenticated("Monitor-Authenticator")
     @Route(method = HttpMethod.DELETE, uri = "/list/{id}")
     public Result delete(@Parameter("id") String id) {
         removeExtensionById(id);
@@ -195,4 +199,18 @@ public class ExtensionRegistryController extends DefaultController {
         extensionCrud.delete(id);
     }
 
+    @Override
+    public String label() {
+        return "Extension Manager";
+    }
+
+    @Override
+    public String url() {
+        return "/monitor/manage";
+    }
+
+    @Override
+    public String category() {
+        return "Documentation";
+    }
 }

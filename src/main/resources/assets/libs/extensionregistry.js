@@ -32,7 +32,7 @@ $(document).ready(function () {
     $("#add").click(function () {
         create($('#url').val());
         $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger");
-        $("#url").val("");
+       $("#url").val("");
 
     });
     //load extension list
@@ -104,25 +104,37 @@ function writeExtensionData(data) {
             .html(ext.name));
 
         //create a list of the information for each key
-        var list = $("<ul></ul>").toggleClass("properties");
+        var list = $("<ul></ul>").toggleClass("properties").addClass("fa-ul");
         $.each(ext, function (key, value) {
             if (value != null && value != "undefined" && !(key == "date" || key == "id")) {
                 if (key == "homepage") {
                     var href = ($("<a></a>")
                         .attr("href", value)
                         .html(value));
-                    $(list).append($("<li></li>").append("<strong>" + key + ":</strong>&nbsp;").append(href));
+                    $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-home fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;").append(href));
                 }
                 else if (key == "repository" || key == "license") {
                     if (value.url != null && value.url != "undefined") {
-                        var href = ($("<a></a>")
-                            .attr("href", value.url)
-                            .html(value.url));
-                        $(list).append($("<li></li>").append("<strong>" + key + ":</strong>&nbsp;").append(href));
+                         var href = ($("<a></a>")
+                                .attr("href", value.url)
+                                .html(value.url));
+                        }
+                    if(key == "repository"){
+                        $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-github-alt fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;").append(href));
+                    }
+                    else{
+                        $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-legal fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;").append(href));
+
                     }
                 }
                 else {
-                    $(list).append($("<li><strong>" + key + ":</strong>&nbsp;" + value + "</li>"));
+                    if(key == "name"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-cube fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
+                    else if(key == "author"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-male fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
+                    else if(key == "description"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-file-text fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
+                    else if(key == "version"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-slack fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
+                    else{
+                        $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-tags fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;").append(value.join(", ")));}
+
                 }
             }
         });

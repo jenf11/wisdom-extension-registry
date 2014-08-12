@@ -18,17 +18,14 @@
   #L%
   -->
 <!DOCTYPE html>
-<html>
+<html layout:decorator="layout">
 <head lang="en">
 
     <title>Extension Manager</title>
-    <link rel="shortcut icon" href="/assets/images/owl-small.png"/>
-    <script src="/libs/jquery.min.js"></script>
-    <script src="/libs/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="/libs/css/bootstrap.css" media="screen"/>
-    <link rel="stylesheet" href="/libs/bootswatch-yeti/css/bootstrap.css" media="screen"/>
     <link rel="stylesheet" href="/assets/table.css"/>
     <link href="/assets/dashboard.css" rel="stylesheet"/>
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css"
+          rel="stylesheet"/>
 
     <style>
         /* generic table styling */
@@ -64,7 +61,7 @@
     </style>
 </head>
 <body>
-<div class="container">
+<div layout:fragment="content">
 <!-- the actual content goes there -->
 
 <h1 class="page-header">Wisdom Extension Manager</h1>
