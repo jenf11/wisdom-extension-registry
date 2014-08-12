@@ -32,6 +32,7 @@ $(document).ready(function () {
     $("#add").click(function () {
         create($('#url').val());
         $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger");
+        $("#url").val("");
 
     });
     //load extension list
@@ -60,10 +61,10 @@ function create(ext) {
     });
 }
 
-/*remove the selected extension */
+/*remove the selected extension based on the database id number */
 function remove(ext) {
     $.ajax({
-        url: "http://" + window.location.host + "/list/" + ext,
+        url: "http://" + window.location.host + "/list/" + encodeURIComponent(ext),
         type: 'DELETE',
         complete: function (result) {
             load();
@@ -71,7 +72,7 @@ function remove(ext) {
     });
 }
 
-/*create actions available for each extension so far that iis just delete*/
+/*create actions available for each extension so far that iis just delete, based on the database id number*/
 function getActionBarForExtension(ext) {
     var bar = $("<div></div>").addClass("bundle-action-bar pull-right").addClass("btn-toolbar").attr("role",
         "toolbar");
@@ -88,58 +89,60 @@ function getActionBarForExtension(ext) {
 /* list all available extension in a table */
 function writeExtensionData(data) {
     $("#ext-table-body").empty();
-    //counter for extensions
-    var count = 0;
     $.each(data, function (index, ext) {
-        count = count + 1;
+        var ename = ext.name;
+        if (HasSubstring(ext.name, ".")) {
+            ename = ename.replace(".", "-");
+        }
+
         //create a new row using the extensions key as a collasable link
         var tr = $("<tr></tr>");
         var info = $("<td></td>");
         info.append($("<a></a>")
-            .attr("href", "#collapse" + index)
+            .attr("href", "#collapse" + ename)
             .attr("data-toggle", "collapse")
-            .html(index));
+            .html(ext.name));
 
         //create a list of the information for each key
         var list = $("<ul></ul>").toggleClass("properties");
         $.each(ext, function (key, value) {
-            if (value != null && value != "undefined" && key != "date") {
+            if (value != null && value != "undefined" && !(key == "date" || key == "id")) {
                 if (key == "homepage") {
                     var href = ($("<a></a>")
                         .attr("href", value)
                         .html(value));
-                    $(list).append($("<li></li>").append(href));
+                    $(list).append($("<li></li>").append("<strong>" + key + ":</strong>&nbsp;").append(href));
                 }
                 else if (key == "repository" || key == "license") {
                     if (value.url != null && value.url != "undefined") {
                         var href = ($("<a></a>")
                             .attr("href", value.url)
                             .html(value.url));
-                        $(list).append($("<li></li>").append(href));
+                        $(list).append($("<li></li>").append("<strong>" + key + ":</strong>&nbsp;").append(href));
                     }
                 }
                 else {
-                    $(list).append($("<li>" + key + "&nbsp;&nbsp;" + value + "</li>"));
+                    $(list).append($("<li><strong>" + key + ":</strong>&nbsp;" + value + "</li>"));
                 }
             }
         });
 
         info.append($("<div></div>")
-            .attr("id", "collapse" + index)
+            .attr("id", "collapse" + ename)
             .addClass("collapse", "meta")
             .html(list));
         //second column of table contains the version
         var version = $("<td></td>").html(ext.version + " (last updated " + ext.date + ")");
 
         if (hasAccessToActionBar) {
-            $(tr).append(info).append(version).append(getActionBarForExtension(index));
+            $(tr).append(info).append(version).append(getActionBarForExtension(ext.id));
         }
-        else{
+        else {
             $(tr).append(info).append(version);
         }
         $("#ext-table-body").append(tr);
     });
-    $("#ext-count").html(count);
+    $("#ext-count").html(data.length);
 
     $("#filter").val("");
     $('table').trigger("update").filterTable({ // apply filterTable to all tables on this page
@@ -151,4 +154,12 @@ function writeExtensionData(data) {
 /*load the list of extensions as json */
 function load() {
     $.get("http://" + window.location.host + "/list").success(writeExtensionData)
+}
+
+/**
+ * @return {boolean}
+ */
+function HasSubstring(string, substring) {
+    return string.indexOf(substring) > -1;
+
 }

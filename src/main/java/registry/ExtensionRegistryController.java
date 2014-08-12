@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import javassist.util.proxy.Proxy;
 import org.apache.commons.io.IOUtils;
 import org.apache.felix.ipojo.annotations.Requires;
 import org.wisdom.api.DefaultController;
@@ -40,13 +41,14 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
+import org.wisdom.orientdb.object.OrientDbCrud;
 
 /**
  * Your first Wisdom Controller.
  */
 @Controller
 public class ExtensionRegistryController extends DefaultController {
-     private Map <String, Extension> list;
+     //private Map <String, Extension> list;
     /**
      * Injects a template named 'welcome'.
      */
@@ -59,34 +61,36 @@ public class ExtensionRegistryController extends DefaultController {
     @View("developerView")
     Template dev;
 
+    @Model(value = Extension.class)
+    private OrientDbCrud<Extension,String> extensionCrud;
+
+
+    Class klass = Proxy.class;
+
 
     @Requires
     Json json;
 
-    public ExtensionRegistryController() {
-        createFakeList();
-    }
-
-    public void createFakeList(){
-        this.list = new HashMap<String, Extension>();
-        String count = String.valueOf(list.size()+1);
-
-            list.put("tracer",new Extension());
-        list.put("javaBob",new Extension());
-        list.put("cssstuff",new Extension());
-        list.put("Imaketheworld",new Extension());
-        list.get("javaBob").setLicense(new License("MIT","https://raw.github.com/jashkenas/underscore/master/LICENSE"));
-        list.get("javaBob").setKeyWords(new String[]{"stuff","things","java"});
-        list.get("javaBob").setRepository(new Repository("git","http://somewhere"));
-        list.get("javaBob").setHomepage("http://somewhere");
-        String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
-        list.get("javaBob").setDate(date);
-        list.get("Imaketheworld").setDate(date);
-        list.get("cssstuff").setDate(date);
-        list.get("tracer").setDate(date);
-
-
-    }
+//    public void createFakeList(){
+//        this.list = new HashMap<String, Extension>();
+//        String count = String.valueOf(list.size()+1);
+//
+//            list.put("tracer",new Extension());
+//        list.put("javaBob",new Extension());
+//        list.put("cssstuff",new Extension());
+//        list.put("Imaketheworld",new Extension());
+//        list.get("javaBob").setLicense(new License("MIT","https://raw.github.com/jashkenas/underscore/master/LICENSE"));
+//        list.get("javaBob").setKeywords(new String[]{"stuff","things","java"});
+//        list.get("javaBob").setRepository(new Repository("git","http://somewhere"));
+//        list.get("javaBob").setHomepage("http://somewhere");
+//        String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
+//        list.get("javaBob").setDate(date);
+//        list.get("Imaketheworld").setDate(date);
+//        list.get("cssstuff").setDate(date);
+//        list.get("tracer").setDate(date);
+//
+//
+//    }
 
 
     /**
@@ -113,6 +117,11 @@ public class ExtensionRegistryController extends DefaultController {
 
     @Route(method = HttpMethod.GET, uri = "/list")
     public Result get() {
+
+        List<Extension> list = new LinkedList<Extension>();
+        for (Extension extension : extensionCrud.findAll()) {
+            list.add(extension);
+        }
         return  ok(list).json();
     }
 
@@ -146,7 +155,7 @@ public class ExtensionRegistryController extends DefaultController {
                             "valid JSON. " +
                             " - " + e.getMessage() +
                             " (" + e.getClass()
-                            .getName() + ")");
+                            .getName() + ")", e);
                     return ok(json.newObject().put("error","An error has occurred:").put("reason",
                             "Please check that your file is " +
                             "valid JSON. " ));
@@ -179,11 +188,11 @@ public class ExtensionRegistryController extends DefaultController {
         }
 
         extension.setDate(new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
-        list.put(extension.getName(), extension);
+        extensionCrud.save(extension);
         return node;
     }
     private void removeExtensionById(String id) {
-        list.remove(id);
+        extensionCrud.delete(id);
     }
 
 }

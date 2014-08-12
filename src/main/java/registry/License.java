@@ -1,12 +1,19 @@
 package registry;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 /**
  * registry
  * User: jennifer
  * Date: 04/08/14
  * Time: 15:28
  */
+@Entity
 public class License {
+
+    @Id
+    private String id;
 
     private String type;
     private String url;
@@ -33,4 +40,10 @@ public class License {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    public String getId() {
+        return id;
+    }
 }
+
+

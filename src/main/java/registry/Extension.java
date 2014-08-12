@@ -1,24 +1,35 @@
 package registry;
 
 
-import javax.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
+@Entity
+@JsonIgnoreProperties("handler")
 public class Extension {
+
+    @Id
+    private String id;
+
     @NotNull
     private String name;
     @NotNull
     private String version;
+    private String author;
+
     @NotNull
     private String description;
-
-    private Repository repository;
-    private String author;
-    private License license;
 
     @NotNull
     protected String homepage;
 
-    protected String[] keyWords;
+    private Repository repository;
+
+    private License license;
+
+    protected String[] keywords;
     private String owner;
 
     private String date;
@@ -90,12 +101,12 @@ public class Extension {
         this.homepage = homepage;
     }
 
-    public String[] getKeyWords() {
-        return keyWords;
+    public String[] getKeywords() {
+        return keywords;
     }
 
-    public void setKeyWords(String[] keyWords) {
-        this.keyWords = keyWords;
+    public void setKeywords(String[] keywords) {
+        this.keywords = keywords;
     }
 
     public String getOwner() {
@@ -106,5 +117,7 @@ public class Extension {
         this.owner = owner;
     }
 
-
+    public String getId() {
+        return id;
+    }
 }
