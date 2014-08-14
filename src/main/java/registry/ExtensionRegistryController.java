@@ -21,6 +21,7 @@ package registry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import javassist.util.proxy.Proxy;
 import org.apache.commons.io.IOUtils;
 import org.apache.felix.ipojo.annotations.Requires;
@@ -49,13 +50,14 @@ import java.util.concurrent.Callable;
  */
 
 @Controller
+
 public class ExtensionRegistryController extends DefaultController implements MonitorExtension {
 
-    @View("managerView")
+    @View("registry/managerView")
     Template manage;
-    @View("userView")
+    @View("registry/userView")
     Template user;
-    @View("developerView")
+    @View("registry/developerView")
     Template dev;
 
     @Model(value = Extension.class)
@@ -66,6 +68,7 @@ public class ExtensionRegistryController extends DefaultController implements Mo
     @Requires
     Json json;
 
+
     /**
      * The action method returning the user's view of the extension page. It handles
      * HTTP GET request on the "/user" URL.
@@ -73,7 +76,7 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      * @return the user extension page.
      */
 
-    @Route(method = HttpMethod.GET, uri = "/user")
+    @Route(method = HttpMethod.GET, uri = "/registry")
     public Result user() {
         return ok(render(user));
     }
@@ -84,7 +87,7 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      * TODO: Separate authorisation
      * @return the developer extension page.
      */
-    @Route(method = HttpMethod.GET, uri = "/dev")
+    @Route(method = HttpMethod.GET, uri = "/registry/dev")
     public Result dev() {
         return ok(render(dev));
     }
@@ -96,7 +99,7 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      * @return the managed extension page.
      */
     @Authenticated("Monitor-Authenticator")
-    @Route(method = HttpMethod.GET, uri = "/monitor/manage")
+    @Route(method = HttpMethod.GET, uri = "/monitor/registry/manage")
     public Result manage() {
         return ok(render(manage));
     }
@@ -107,7 +110,7 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      *
      * @return extension list in a json structure.
      */
-    @Route(method = HttpMethod.GET, uri = "/list")
+    @Route(method = HttpMethod.GET, uri = "/registry/list")
     public Result get() {
 
         List<Extension> list = new LinkedList<Extension>();
@@ -125,10 +128,24 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      * @return result.
      */
     @Authenticated("Monitor-Authenticator")
-    @Route(method = HttpMethod.DELETE, uri = "/list/{id}")
+    @Route(method = HttpMethod.DELETE, uri = "/registry/list/{id}")
     public Result delete(@Parameter("id") String id) {
         removeExtensionById(id);
         return ok();
+    }
+
+    /**
+     * The action method deleting a specific extension from the database. It handles
+     * HTTP DELETE request on the "/list" URL.  Must be authenticated via the Wisdom Monitor
+     * for this method.
+     *
+     * @return result.
+     */
+    @Authenticated("Monitor-Authenticator")
+    @Route(method = HttpMethod.POST, uri = "/registry/list/{id}")
+    public Result update(@Parameter("id") String id) {
+        String url = extensionCrud.findOne(id).getSelf();
+        return ok(parseUrl(url));
     }
 
     /**
@@ -137,18 +154,27 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      *
      * @return json structure containing the new extension
      */
-    @Route(method = HttpMethod.POST, uri = "/upload")
-    public Result findExt(final @FormParameter("url") String u) {
+    @Route(method = HttpMethod.POST, uri = "/registry/upload")
+    public Result addExt(final @FormParameter("url") String u) {
+               return ok(parseUrl(u));
+    }
 
+    /**
+     * A method that parses a url expecting a json object.
+     * @param url the url to be parsed.
+     * @return  the json object if everything went well or a json object with an error msg if it
+     * didn't.
+     */
+    private Result parseUrl(final String url){
         return async(new Callable<Result>() {
             @Override
             public Result call() throws Exception {
 
                 try {
-                    URL url = new URL(u);
-                    String j = IOUtils.toString(url);
+                    URL u = new URL(url);
+                    String j = IOUtils.toString(u);
                     JsonNode node = json.parse(j);
-                    node = addToList(node);
+                    node = createExt((ObjectNode) node, url);
                     return ok(node);
                 } catch (IOException e) {
                     // Cannot read the URL
@@ -168,20 +194,18 @@ public class ExtensionRegistryController extends DefaultController implements Mo
                 }
             }
         });
-
-
     }
 
     /**
      * Method that reads a json structure validating that it has all of the required javabean
      * fields that cannot be null by using Validator. If all goes well the object is added to the
-     * database.
+     * database or updated if it already exists.
      *
      * @return json structure containing either the extension or error message
      */
     @Requires
     Validator validator;
-    private JsonNode addToList(JsonNode node) {
+    private JsonNode createExt(ObjectNode node, String url) {
         ObjectNode result = json.newObject();
         //map our incoming json to the
         Extension extension = json.mapper().convertValue(node, Extension.class);
@@ -200,10 +224,40 @@ public class ExtensionRegistryController extends DefaultController implements Mo
             return result;
         }
 
-        extension.setDate(new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
-        extensionCrud.save(extension);
+
+            List<Extension> omg = extensionCrud.query(new OSQLSynchQuery<Extension>("select * " +
+                    "from  " +
+                    "Extension where name like '"+extension.getName()+"'"));
+
+
+
+        if(!omg.isEmpty()){
+           updateExtInDB(extension, url, omg.get(0));
+            node.put("updated", true);
+        }
+        else {
+            addExtToDB(extension, url);
+            node.put("updated", false);
+        }
         return node;
     }
+
+    private void addExtToDB(Extension extension, String url){
+        extension.setDateAdded(new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
+        extension.setSelf(url);
+        extensionCrud.save(extension);
+
+    }
+    private void updateExtInDB(Extension extension, String url, Extension oldExt){
+       extension.setDateAdded(oldExt.getDateAdded());
+        extension.setDateUpdated(new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
+        extension.setSelf(url);
+        removeExtensionById(oldExt.getId());
+        extensionCrud.save(extension);
+
+    }
+
+
 
     /**
      * Deletes the extension specified by database id from the database.
@@ -229,7 +283,7 @@ public class ExtensionRegistryController extends DefaultController implements Mo
      */
     @Override
     public String url() {
-        return "/monitor/manage";
+        return "/monitor/registry/manage";
     }
 
     /**

@@ -38,17 +38,19 @@ public class Extension {
     protected String[] keywords;
     private String owner;
 
-    private String date;
+    private String dateAdded;
+    private String dateUpdated;
+    private String self;
 
     public Extension() {
     }
 
-    public String getDate() {
-        return date;
+    public String getDateAdded() {
+        return dateAdded;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setDateAdded(String dateAdded) {
+        this.dateAdded = dateAdded;
     }
 
     public String getName() {
@@ -125,5 +127,25 @@ public class Extension {
 
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getDateUpdated() {
+        return dateUpdated;
+    }
+
+    public void setDateUpdated(String dateUpdated) {
+        this.dateUpdated = dateUpdated;
+    }
+
+    public String getSelf() {
+        return self;
+    }
+
+    public void setSelf(String self) {
+        this.self = self;
     }
 }

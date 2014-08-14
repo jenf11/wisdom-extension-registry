@@ -21,69 +21,44 @@
 <html>
 <head lang="en">
 
-    <title>Wisdom Extensions</title>
+    <title>Extension Manager</title>
     <link rel="shortcut icon" href="/assets/images/owl-small.png"/>
     <script src="/libs/jquery.min.js"></script>
     <script src="/libs/js/bootstrap.min.js"></script>
+    <script src="/assets/libs/jquery.filtertable.min.js"></script>
     <link rel="stylesheet" href="/libs/css/bootstrap.css" media="screen"/>
     <link rel="stylesheet" href="/libs/bootswatch-yeti/css/bootstrap.css" media="screen"/>
+    <link rel="stylesheet" href="/assets/registry-style.css"/>
     <link rel="stylesheet" href="/assets/table.css"/>
     <link href="/assets/dashboard.css" rel="stylesheet"/>
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css"
           rel="stylesheet"/>
 
-    <style>
-        /* generic table styling */
-        table {
-            border-collapse: collapse;
-        }
 
-        th, td {
-            padding: 5px;
-        }
-
-        th {
-            border-bottom: 2px solid #999;
-            background-color: #eee;
-            vertical-align: bottom;
-        }
-
-        td {
-            border-bottom: 1px solid #ccc;
-        }
-
-        /* filter-table specific styling */
-        td.alt {
-            background-color: #ffc;
-            background-color: rgba(255, 255, 0, 0.2);
-        }
-        #filter, #url{
-            border-radius: 5px;
-        }
-
-        /* special filter field styling for this example */
-
-    </style>
 </head>
 <body>
 <div class="container">
     <!-- the actual content goes there -->
 
-    <h1 class="page-header">Wisdom Extension Registry</h1>
-    <!-- extension counter -->
+    <h1 class="page-header"><img src="/assets/images/owl.png" class="owl" alt="some_text"/>Wisdom Extension Registry</h1>
+    <!-- extension counter  -->
     <div class="container">
         <div class="row">
-            <div class="col-md-offset-1 col-sm-2 placeholder">
-                <h4 id="ext-count" class="text-center">0</h4>
+            <div class="col-sm-offset-1 col-sm-10">
 
-                <p class="text-muted text-center">Wisdom Extensions</p>
+                <p class="text-muted text-center">Welcome to the Wisdom Framework extension
+                    registry, here you will find a variety of extensions that you can use in
+                    your Wisdom project. Clicking on an extension will show you detailed
+                    information including a link to the extension's homepage. You can search for an
+                    extension using the search box below which will parse all of the detailed
+                    information.</p>
             </div>
         </div>
     </div>
     <!-- search bar and extension list -->
     <div class="container">
         <div class="row">
-            <div class="col-md-10">
+            <div class="col-sm-offset-1 col-md-10">
                 <input class="input-sm" id="filter" placeholder="Search"/>
                 <button class="btn btn-info btn-xs pull-right" id="refresh"><span
                         class="glyphicon glyphicon-refresh"></span></button>
@@ -92,6 +67,7 @@
                     <tr>
                         <th class="col-md-6">Extension Name</th>
                         <th class="col-md-3">Version</th>
+
                     </tr>
                     </thead>
                     <tbody id="ext-table-body">
@@ -100,31 +76,15 @@
             </div>
         </div>
     </div>
-    <!-- input box to add an extension -->
-    <div class="container">
-        <h3>Add an Extension</h3>
 
-        <div class="row">
-            <div class="col-md-4">
-                <input class="input-sm" id="url" placeholder="Enter URL"/>
-                <button type="submit" class="btn btn-info btn-xs" id="add">Submit</button>
-            </div>
-            <div class="col-md-8">
-                <span class="alert" id="error-msg"></span>
-            </div>
-        </div>
-    </div>
 
     <!-- Scripts -->
     <script src="/libs/js/jquery.tablesorter.min.js"></script>
     <script src="/libs/js/jquery.tablesorter.widgets.min.js"></script>
-    <script src="/assets/libs/jquery.filtertable.min.js"></script>
     <script src="/assets/libs/extensionregistry.js"></script>
     <script language="javascript">
         var hasAccessToActionBar = false;
     </script>
-
-
 </div>
 </body>
 </html>

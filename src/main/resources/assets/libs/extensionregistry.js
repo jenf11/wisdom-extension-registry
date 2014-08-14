@@ -26,12 +26,12 @@ $(document).ready(function () {
     $("a").tooltip();
     $("#refresh").click(function () {
         load();
-        $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger");
+        $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger").removeClass("alert-warning");
     });
     //add a new extension
     $("#add").click(function () {
         create($('#url').val());
-        $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger");
+        $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger").removeClass("alert-warning");
        $("#url").val("");
 
     });
@@ -42,20 +42,22 @@ $(document).ready(function () {
 
 /* create a new extension from a json file, calls the upload method*/
 function create(ext) {
-    var url = "http://" + window.location.host + "/upload";
+    var url = "http://" + window.location.host + "/registry/upload";
     // var url = /*[[${#routes.route('upload')}]]*/ null;
     $.ajax({
         type: "POST",
         url: url,
         data: { url: ext }
     }).done(function (data) {
-        console.log(data);
+       // console.log(data);
         //if error message display
         if (data.error) {
-            $("#error-msg").html(data.error + " " + data.reason).addClass("alert-danger").removeClass("alert-success");
+            $("#error-msg").html(data.error + " " + data.reason).addClass("alert-danger").removeClass("alert-success").removeClass("alert-warning");
         }
-        else {
-            $("#error-msg").html("The " + data.name + " extension has been added.").removeClass("alert-danger").addClass("alert-success");
+        else if (data.updated) {
+            $("#error-msg").html("The " + data.name + " extension has been updated.").removeClass("alert-danger").removeClass("alert-success").addClass("alert-warning");
+        } else {
+            $("#error-msg").html("The " + data.name + " extension has been added.").removeClass("alert-danger").removeClass("alert-warning").addClass("alert-success");
         }
         load();
     });
@@ -64,8 +66,19 @@ function create(ext) {
 /*remove the selected extension based on the database id number */
 function remove(ext) {
     $.ajax({
-        url: "http://" + window.location.host + "/list/" + encodeURIComponent(ext),
+        url: "http://" + window.location.host + "/registry/list/" + encodeURIComponent(ext),
         type: 'DELETE',
+        complete: function (result) {
+            load();
+        }
+    });
+}
+
+/*remove the selected extension based on the database id number */
+function update(ext) {
+    $.ajax({
+        url: "http://" + window.location.host + "/registry/list/" + encodeURIComponent(ext),
+        type: 'POST',
         complete: function (result) {
             load();
         }
@@ -81,7 +94,12 @@ function getActionBarForExtension(ext) {
     uninstall.click(function () {
         remove(ext)
     });
+    var extupdate = $("<button type=\"button\" class=\"btn btn-default btn-xs\"><span class=\"glyphicon glyphicon-repeat\"></span></button>");
+    extupdate.click(function () {
+        update(ext)
+    });
     inner.append(uninstall);
+    inner.append(extupdate);
     bar.append(inner);
     return $("<td></td>").append(bar);
 }
@@ -106,7 +124,7 @@ function writeExtensionData(data) {
         //create a list of the information for each key
         var list = $("<ul></ul>").toggleClass("properties").addClass("fa-ul");
         $.each(ext, function (key, value) {
-            if (value != null && value != "undefined" && !(key == "date" || key == "id")) {
+            if (value != null && value != "undefined" && !(key == "dateAdded" || key == "id")) {
                 if (key == "homepage") {
                     var href = ($("<a></a>")
                         .attr("href", value)
@@ -132,9 +150,10 @@ function writeExtensionData(data) {
                     else if(key == "author"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-male fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
                     else if(key == "description"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-file-text fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
                     else if(key == "version"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-slack fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;" + value ));}
-                    else{
-                        $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-tags fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;").append(value.join(", ")));}
-
+                    else if(key == "keywords"){ $(list).append($("<li></li>").append("<i class=\"fa-li fa fa-tags fa-fw\"></i>&nbsp;").append("<strong>" + key + ":</strong>&nbsp;").append(value.join(", ")));}
+                    else{//console.log("why are we here? keys we dont display: "+key+value)
+                        //do nothing
+                     }
                 }
             }
         });
@@ -144,7 +163,15 @@ function writeExtensionData(data) {
             .addClass("collapse", "meta")
             .html(list));
         //second column of table contains the version
-        var version = $("<td></td>").html(ext.version + " (last updated " + ext.date + ")");
+        if(ext.dateUpdated == null && ext.dateAdded != null) {
+            var version = $("<td></td>").html(ext.version + " (added " + ext.dateAdded + ")");
+        }
+        else if(ext.dateAdded == null){
+            var version = $("<td></td>").html(ext.version);
+        }
+        else{
+            var version = $("<td></td>").html(ext.version + " (last updated " + ext.dateUpdated + ")");
+        }
 
         if (hasAccessToActionBar) {
             $(tr).append(info).append(version).append(getActionBarForExtension(ext.id));
@@ -165,7 +192,8 @@ function writeExtensionData(data) {
 
 /*load the list of extensions as json */
 function load() {
-    $.get("http://" + window.location.host + "/list").success(writeExtensionData)
+    console.log(window.location.host);
+    $.get("http://" + window.location.host + "/registry/list").success(writeExtensionData)
 }
 
 /**
