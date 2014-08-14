@@ -101,11 +101,6 @@
             <version>0.6.2</version>
         </dependency>
         <dependency>
-            <groupId>org.wisdom-framework</groupId>
-            <artifactId>documentation</artifactId>
-            <version>0.6.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>font-awesome</artifactId>
             <version>4.1.0</version>

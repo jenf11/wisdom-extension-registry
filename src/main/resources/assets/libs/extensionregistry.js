@@ -69,6 +69,7 @@ function remove(ext) {
         url: "http://" + window.location.host + "/registry/list/" + encodeURIComponent(ext),
         type: 'DELETE',
         complete: function (result) {
+            $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger").removeClass("alert-warning");
             load();
         }
     });
@@ -80,6 +81,7 @@ function update(ext) {
         url: "http://" + window.location.host + "/registry/list/" + encodeURIComponent(ext),
         type: 'POST',
         complete: function (result) {
+            $("#error-msg").html("").removeClass("alert-success").removeClass("alert-danger").removeClass("alert-warning");
             load();
         }
     });
