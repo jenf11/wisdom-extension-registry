@@ -34,3 +34,11 @@ td.alt {
 #filter {
     margin-bottom: 5px;
 }
+
+a[data-toggle="collapse"] {
+    font-size: large;
+}
+
+ul.properties li {
+    font-size:small!important;
+}
