@@ -26,7 +26,7 @@
 
     <groupId>org.wisdom-framework</groupId>
     <artifactId>wisdom-registry</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.0-snapshot</version>
 
     <packaging>wisdom</packaging>
 
@@ -61,7 +61,7 @@
         <dependency>
             <groupId>org.wisdom-framework</groupId>
             <artifactId>wisdom-orientdb-object</artifactId>
-            <version>0.2.1-SNAPSHOT</version>
+            <version>0.2.6</version>
         </dependency>
 
 
